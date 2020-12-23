@@ -1,0 +1,23 @@
+trigger MaxSalaryCal on Contact(after insert,after update,after delete,after undelete) {
+    Set<Id> accids= new Set<id>();
+    List<Account> updateList=new List<Account>();
+    if(Trigger.isInsert|| Trigger.isUpdate||Trigger.isUndelete){
+        for(Contact c:trigger.new)
+        {
+            accids.add(c.accountid);
+        }    }
+    if(Trigger.isDelete){
+        for(Contact c1:Trigger.old){
+            accids.add(c1.accountid);
+        }
+    }
+    for(AggregateResult result:[select accountid accid,max(salary__C) maxSalary,min(salary__c) minsalary from contact where accountid in: accids group by accountid])               
+    {
+        Account a= new Account();
+        a.MaxSalary__c=(Decimal) result.get('maxSalary');  
+        a.MinSalary__c=(Decimal)result.get('minsalary');
+        a.id=(Id)result.get('accid');
+        updateList.add(a);                                       
+    }
+    update updateList;   
+}
